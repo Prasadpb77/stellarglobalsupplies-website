@@ -1,0 +1,103 @@
+name: Deploy to AWS S3 + CloudFront
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint & Type-check
+        run: |
+          npx next lint
+          npx tsc --noEmit
+
+      - name: Build static export
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: out
+          path: out/
+          retention-days: 1
+
+  deploy:
+    name: Deploy to S3 + Invalidate CloudFront
+    needs: lint-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: out
+          path: out/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Sync static assets to S3
+        run: |
+          aws s3 sync out/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --cache-control "public, max-age=3600, must-revalidate" \
+            --exclude "*.html" \
+            --exclude "_next/static/*" \
+            --exclude "img/*"
+
+      - name: Sync _next/static (immutable, 1 year)
+        run: |
+          aws s3 sync out/_next/static/ s3://${{ secrets.S3_BUCKET_NAME }}/_next/static/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --delete
+
+      - name: Sync images (7 days)
+        run: |
+          aws s3 sync out/img/ s3://${{ secrets.S3_BUCKET_NAME }}/img/ \
+            --cache-control "public, max-age=604800" \
+            --delete
+
+      - name: Sync HTML files (no-cache)
+        run: |
+          aws s3 sync out/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --exclude "*" \
+            --include "*.html"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Deployment complete"
+          echo "🌐 Site: https://${{ secrets.S3_BUCKET_NAME }}"
+          echo "☁️ CloudFront Distribution: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
