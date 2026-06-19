@@ -1,3 +1,5 @@
+"use client";
+
 import { Phone, Mail, MapPin } from "lucide-react";
 
 const QUICK_LINKS = [
