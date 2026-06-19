@@ -111,7 +111,6 @@ export default function Navbar() {
                   src="/img/logo.jpg"
                   alt="Stellar Global Supplies Logo"
                   className="object-contain w-full h-full"
-                  priority
                 />
               </div>
               <div>
