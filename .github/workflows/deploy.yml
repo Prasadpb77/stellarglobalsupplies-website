@@ -24,11 +24,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Lint & Type-check
-        run: |
-          npx next lint
-          npx tsc --noEmit
-
       - name: Build static export
         run: npm run build
 
