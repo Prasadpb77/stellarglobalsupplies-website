@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { Menu, X, ChevronDown, Phone } from "lucide-react";
 
 const NAV_LINKS = [
@@ -107,13 +106,11 @@ export default function Navbar() {
               className="flex items-center gap-3 group"
               aria-label="Stellar Global Supplies – Home"
             >
-              <div className="relative w-12 h-12 rounded-xl overflow-hidden ring-2 ring-primary-200 group-hover:ring-primary-400 transition-all duration-200">
-                <Image
+              <div className="relative w-20 h-12 rounded-lg overflow-hidden ring-2 ring-primary-200 group-hover:ring-primary-400 transition-all duration-200">
+                <img
                   src="/img/logo.jpg"
                   alt="Stellar Global Supplies Logo"
-                  fill
-                  sizes="48px"
-                  className="object-cover"
+                  className="object-contain w-full h-full"
                   priority
                 />
               </div>

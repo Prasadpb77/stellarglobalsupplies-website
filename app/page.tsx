@@ -8,6 +8,7 @@ import Products    from "@/components/Products";
 import CTASection  from "@/components/CTASection";
 import Footer      from "@/components/Footer";
 import BackToTop   from "@/components/BackToTop";
+import ChatWidget  from "@/components/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Stellar Global Supplies | Premium SS & MS Industrial Materials – Pune",
@@ -55,6 +56,9 @@ export default function HomePage() {
 
       {/* ── BACK TO TOP ────────────────────────────────── */}
       <BackToTop />
+
+      {/* ── FLOATING CHAT WIDGET ───────────────────────── */}
+      <ChatWidget />
     </>
   );
 }
