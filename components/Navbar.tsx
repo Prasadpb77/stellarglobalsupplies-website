@@ -129,13 +129,17 @@ export default function Navbar() {
               {NAV_LINKS.map((link) =>
                 link.children ? (
                   /* Dropdown */
-                  <div key={link.label} className="relative">
+                  <div 
+                    key={link.label} 
+                    className="relative"
+                    onMouseEnter={() => setDropdownOpen(true)}
+                    onMouseLeave={() => setDropdownOpen(false)}
+                  >
                     <button
                       className={`nav-link flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-primary-50 ${
                         activeSection === "products" ? "active" : ""
                       }`}
                       onClick={() => setDropdownOpen((o) => !o)}
-                      onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
                       aria-haspopup="true"
                       aria-expanded={dropdownOpen}
                     >
@@ -150,6 +154,8 @@ export default function Navbar() {
                       <div
                         className="absolute top-full left-0 mt-2 w-56 glass rounded-2xl shadow-glass overflow-hidden py-1"
                         role="menu"
+                        onMouseEnter={() => setDropdownOpen(true)}
+                        onMouseLeave={() => setDropdownOpen(false)}
                       >
                         {link.children.map((child) => (
                           <a

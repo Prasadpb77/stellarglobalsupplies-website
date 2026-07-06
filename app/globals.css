@@ -1,3 +1,11 @@
+/* Font-face with local fallback for better performance */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Inter'), local('Arial'), local('Helvetica Neue');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 
 @tailwind base;
@@ -17,6 +25,10 @@
   --dark-rgb:      14, 46, 80;
 
   scroll-behavior: smooth;
+  /* Enable GPU acceleration for smooth animations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
 }
 
 *,
@@ -285,9 +297,46 @@ body {
 /* ── PRODUCT IMAGE ZOOM ───────────────────────────────────────── */
 .img-zoom {
   @apply transition-transform duration-500 ease-out;
+  /* GPU acceleration */
+  will-change: transform;
 }
 .product-card:hover .img-zoom {
   transform: scale(1.06);
+}
+
+/* ── PERFORMANCE OPTIMIZATIONS ─────────────────────────────────── */
+/* GPU acceleration for animated elements */
+.product-card,
+.btn-primary,
+.nav-link,
+.bento-card {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize image rendering */
+img {
+  content-visibility: auto;
+  contain-intrinsic-size: 300px;
+}
+
+/* Reduce layout shifts */
+.product-card {
+  contain: layout style paint;
+}
+
+/* Smooth scrolling only when user prefers it */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Optimize font loading */
+body {
+  font-display: swap;
+  text-rendering: optimizeLegibility;
 }
 
 /* ── FOOTER LINK ──────────────────────────────────────────────── */

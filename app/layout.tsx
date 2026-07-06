@@ -30,6 +30,12 @@ export const metadata: Metadata = {
     "locking fastening products",
     "nylock nuts castle nuts india",
     "metal supplier talawade pune",
+    "SS round bars pune",
+    "MS square tubes supplier",
+    "industrial steel distributor india",
+    "stainless steel sheets pune",
+    "mild steel plates india",
+    "fasteners manufacturer india",
   ],
   authors: [{ name: "Stellar Global Supplies", url: "https://stellarglobalsupplies.com" }],
   creator: "Stellar Global Supplies",
@@ -43,6 +49,7 @@ export const metadata: Metadata = {
       follow: true,
       "max-image-preview": "large",
       "max-snippet": -1,
+      "max-video-preview": -1,
     },
   },
   openGraph: {
@@ -84,6 +91,12 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   manifest: "/site.webmanifest",
+  other: {
+    "geo.region": "IN-MH",
+    "geo.placename": "Pune",
+    "geo.position": "18.6727;73.8196",
+    "ICBM": "18.6727, 73.8196",
+  },
 };
 
 export const viewport: Viewport = {
@@ -174,12 +187,37 @@ export default function RootLayout({
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* DNS Prefetch for external resources */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        
+        {/* Preload critical assets */}
+        <link rel="preload" as="image" href="/img/logo.jpg" />
+        <link rel="preload" as="image" href="/img/og-image.jpg" />
 
         {/* Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        
+        {/* Additional SEO Meta Tags */}
+        <meta name="geo.region" content="IN-MH" />
+        <meta name="geo.placename" content="Pune" />
+        <meta name="geo.position" content="18.6727;73.8196" />
+        <meta name="ICBM" content="18.6727, 73.8196" />
+        <meta name="revisit-after" content="7 days" />
+        <meta name="distribution" content="India" />
+        <meta name="coverage" content="Worldwide" />
+        <meta name="rating" content="general" />
+        <meta name="language" content="English" />
+        <meta name="doc-type" content="Web Page" />
+        <meta name="doc-class" content="Completed" />
+        <meta name="doc-rights" content="Public" />
+        
+        {/* Performance hints */}
+        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
       </head>
       <body className="font-sans antialiased">
         {children}
