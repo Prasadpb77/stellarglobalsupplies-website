@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Menu, X, ChevronDown, Phone } from "lucide-react";
 
 const NAV_LINKS = [
@@ -24,6 +24,7 @@ export default function Navbar() {
   const [mobileOpen,    setMobileOpen]    = useState(false);
   const [dropdownOpen,  setDropdownOpen]  = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Scroll detection
   const handleScroll = useCallback(() => {
@@ -53,8 +54,26 @@ export default function Navbar() {
   const handleNavClick = (href: string) => {
     setMobileOpen(false);
     setDropdownOpen(false);
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
     const el = document.querySelector(href);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleDropdownEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    setDropdownOpen(true);
+  };
+
+  const handleDropdownLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setDropdownOpen(false);
+    }, 100);
   };
 
   return (
@@ -132,8 +151,8 @@ export default function Navbar() {
                   <div 
                     key={link.label} 
                     className="relative"
-                    onMouseEnter={() => setDropdownOpen(true)}
-                    onMouseLeave={() => setDropdownOpen(false)}
+                    onMouseEnter={handleDropdownEnter}
+                    onMouseLeave={handleDropdownLeave}
                   >
                     <button
                       className={`nav-link flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-primary-50 ${
@@ -154,8 +173,8 @@ export default function Navbar() {
                       <div
                         className="absolute top-full left-0 mt-2 w-56 glass rounded-2xl shadow-glass overflow-hidden py-1"
                         role="menu"
-                        onMouseEnter={() => setDropdownOpen(true)}
-                        onMouseLeave={() => setDropdownOpen(false)}
+                        onMouseEnter={handleDropdownEnter}
+                        onMouseLeave={handleDropdownLeave}
                       >
                         {link.children.map((child) => (
                           <a
