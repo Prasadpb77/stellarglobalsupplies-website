@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write  # Required for OIDC authentication
 
 jobs:
   lint-and-build:
@@ -48,11 +49,10 @@ jobs:
           name: out
           path: out/
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Sync static assets to S3
