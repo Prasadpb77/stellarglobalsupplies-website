@@ -6,7 +6,7 @@
 ---
 
 ## 🏗️ What It Does
-Stellar Global Supplies is a B2B web platform addressing procurement challenges for industrial buyers in India by providing a digital catalog of over 500 products in Stainless Steel, Mild Steel, and Fastening categories. The platform enhances supplier visibility and streamlines the enquiry process, benefiting manufacturers, fabricators, and procurement managers.
+The Stellar Global Supplies Web Platform addresses the challenges faced by industrial buyers in India who struggle to find reliable suppliers for Stainless Steel, Mild Steel, and Fastening products. It provides a modern, SEO-optimized digital catalog and enquiry portal showcasing over 500 products, enabling direct contact for quotes and enhancing online credibility through professional design and fast performance.
 
 ## ⚙️ Tech Stack
 - **Language**: TypeScript 5, JavaScript ES2022
@@ -20,20 +20,20 @@ Stellar Global Supplies is a B2B web platform addressing procurement challenges 
 - **Key Integrations**: Lucide React 0.383.0 (icons), Framer Motion 11.3.2 (animations), Google Fonts (Inter font family), clsx 2.1.1 (utility)
 
 ## 🚀 Highlight Features
-- **Product Catalog with Tab Navigation**: Utilizes React state management and Next.js static generation for seamless tab-based filtering of 500+ products.
-- **Sticky Navigation with Dropdown Menu**: Implements a timeout-based hover system using IntersectionObserver API for active section detection and improved user experience.
-- **Smooth Scroll Navigation**: Leverages native DOM scrollIntoView API for animated scrolling between sections, enhancing navigation fluidity.
-- **SEO Optimization System**: Employs Next.js Metadata API and JSON-LD structured data for comprehensive SEO, achieving a 100/100 Lighthouse score.
-- **Performance Optimized Rendering**: Integrates CSS will-change and content-visibility for fast page loads and smooth animations, resulting in a 90+ Lighthouse performance score.
-- **Automated CI/CD Pipeline**: Uses GitHub Actions and OIDC for secure AWS deployments, streamlining the development workflow.
-- **Glassmorphism Design System**: Applies Tailwind CSS for a modern visual style with glassmorphism effects, enhancing aesthetic appeal.
+- **Product Catalog with Tab Navigation**: Built with React state management and Next.js static generation, allowing client-side tab switching without page reloads.
+- **Sticky Navigation with Dropdown Menu**: Utilizes React hooks and IntersectionObserver API for performant scroll detection and a timeout-based hover system to resolve dropdown click issues.
+- **SEO Optimization System**: Implements Next.js Metadata API and JSON-LD structured data for comprehensive search engine optimization.
+- **Performance Optimized Rendering**: Leverages CSS will-change and transform for GPU acceleration, ensuring fast page loads and smooth animations.
+- **Automated CI/CD Pipeline**: Uses GitHub Actions and OIDC for secure AWS authentication, automating builds and deployments.
+- **Glassmorphism Design System**: Employs Tailwind CSS for modern design with glass-morphism effects and custom shadows.
+- **Contact Integration**: Provides multiple contact methods with contextual enquiry buttons for user engagement.
 
 ## 🧠 Architecture & Key Decisions
-- **Static Site Generation (SSG)**: Chose Next.js export mode for maximum performance and global CDN distribution, suitable for a marketing platform with no dynamic data.
+- **Static Site Generation (SSG)**: Chose Next.js export mode for maximum performance and zero server costs, suitable for a marketing/catalog platform.
 - **OIDC for AWS Authentication**: Migrated to OIDC for temporary credentials, reducing the burden of secret rotation and enhancing security.
-- **Component-Based Architecture**: Built with React functional components for maintainability and independent testing of UI sections.
-- **CSS-in-JS via Tailwind**: Selected Tailwind CSS for utility-first development, ensuring a consistent design system and smaller bundle sizes.
-- **IntersectionObserver over Scroll Events**: Used IntersectionObserver API for scroll detection to improve performance and reduce jank.
+- **Component-Based Architecture**: Built with React functional components for maintainability, enabling independent development and testing.
+- **CSS-in-JS via Tailwind**: Selected Tailwind CSS for utility-first development, enforcing a consistent design system and smaller bundle sizes.
+- **IntersectionObserver API**: Used for active section detection, improving performance by avoiding scroll event listeners.
 
 ## 📈 Scale & Impact
 - **Active users**: UNKNOWN
@@ -45,43 +45,42 @@ Stellar Global Supplies is a B2B web platform addressing procurement challenges 
 ## 🔥 Engineering Challenges Solved
 
 ### Dropdown Menu Click Issue
-**Problem:** The Products dropdown menu items were not clickable due to premature closing before click events could register.  
-**Failed approach:** Initial use of onBlur event handler with setTimeout created race conditions.  
-**Solution:** Implemented a timeout-based hover system using useRef to manage a close timer, allowing for a grace period for user interactions.
+**Problem:** The Products dropdown menu items were not clickable due to the dropdown closing before click events could register.  
+**Failed approach:** Initial attempts with onBlur event handler and setTimeout caused race conditions.  
+**Solution:** Implemented a timeout-based hover system using useRef to manage a close timer, allowing a grace period for user interaction.
 
 ### Performance Optimization at Scale
 **Problem:** Slow initial load times and janky scroll performance due to 500+ product images and complex animations.  
 **Failed approach:** Standard CSS transitions without GPU acceleration led to layout thrashing.  
-**Solution:** Applied multi-layered optimizations including CSS will-change, content-visibility, and font-display: swap, achieving a 90+ Lighthouse performance score.
+**Solution:** Multi-layered optimizations including CSS will-change, content-visibility, and SWC minification resulted in a 90+ Lighthouse performance score.
 
 ### SEO for Static Export
-**Problem:** Loss of SEO capabilities in static export compared to SSR, particularly for dynamic meta tags.  
+**Problem:** Loss of SEO capabilities in Next.js static export, particularly for dynamic meta tags.  
 **Failed approach:** Client-side meta tag injection was unreliable for search engines.  
-**Solution:** Leveraged Next.js Metadata API with generateMetadata function and implemented comprehensive JSON-LD structured data, achieving a 100/100 SEO score.
+**Solution:** Leveraged Next.js Metadata API with generateMetadata for static generation and implemented comprehensive JSON-LD structured data.
 
 ## 🎨 UI & Visual Identity
 
 ### Brand Colors
-| Role | Name | Hex | Usage |
-|------|------|-----|-------|
-| Primary | Green | #00B98E | CTAs, links, active states, accents |
-| Secondary | Orange | #FF6922 | Highlights, gradients, secondary actions |
-| Accent | Mint | #EFFDF5 | Page backgrounds, section alternates |
-| Background | Navy | #0E2E50 | Text, headers, footer, strong contrasts |
-| Surface | White | #FFFFFF | Cards, modals, elevated surfaces |
-| Text Primary | Dark Gray | #4a5568 | Body text, muted elements |
-| Text Secondary | Light Gray | #718096 | Body text, muted elements |
+| Role       | Name    | Hex      | Usage                           |
+|------------|---------|----------|---------------------------------|
+| Primary    | Green   | #00B98E  | CTAs, links, active states      |
+| Secondary  | Orange  | #FF6922  | Highlights, gradients           |
+| Background | Mint    | #EFFDF5  | Page backgrounds, section alternates |
+| Text       | Navy    | #0E2E50  | Text, headers, footer           |
+| Surface    | White   | #FFFFFF  | Cards, modals, elevated surfaces |
+| Gray       | Gray    | #4a5568, #718096 | Body text, muted elements |
 
 ### Typography
-- **Primary Font**: Inter (400 - regular, 700 - bold) for body text and headings
-- **Secondary Font**: Arial, Helvetica Neue (fallbacks)
-- **Heading sizes**: H1 scale from 3xl (mobile) to 5xl (desktop), H2 from 2xl to 4xl
+- **Primary Font**: Inter (400, 500, 600, 700) - Body text and headings
+- **Secondary Font**: Arial, Helvetica Neue (fallbacks) - Body text
+- **Heading sizes**: H1 (3xl mobile → 5xl desktop), H2 (2xl → 4xl)
 
 ### Visual Style
 - **Design language**: Glassmorphism
-- **Border radius**: Rounded-2xl (16px)
+- **Border radius**: Rounded (12px for buttons, 16px for cards)
 - **Shadows**: Subtle (shadow-card, shadow-glass)
-- **Spacing scale**: Base unit: 4px
+- **Spacing scale**: Base unit 4px
 - **Iconography**: Lucide React
 - **Illustration style**: None
 
@@ -91,27 +90,27 @@ Stellar Global Supplies is a B2B web platform addressing procurement challenges 
 - **Dark mode variant**: No
 
 ### Component Patterns
-- **Buttons**: Rounded-xl (12px), px-6 py-3, font-semibold, shadow-primary for primary, border for ghost
-- **Cards**: Rounded-2xl (16px), border border-gray-100, shadow-card, hover:shadow-card-hover
-- **Badges/Tags**: Rounded-full, px-3 py-1, text-xs, font-semibold, uppercase tracking-widest
-- **Navigation**: Sticky header, glass morphism on scroll, backdrop-blur
+- **Buttons**: Rounded-xl (12px), px-6 py-3, font-semibold, hover:-translate-y-0.5
+- **Cards**: Rounded-2xl (16px), border border-gray-100, hover:shadow-card-hover
+- **Badges/Tags**: Rounded-full, px-3 py-1, text-xs, font-semibold
+- **Navigation**: Sticky header, glass morphism on scroll
 
 ### Image Generation Prompt
-Create a social media image for the Stellar Global Supplies web platform showcasing a modern B2B industrial supply catalog. Use a glassmorphism design style with a gradient background from light green (#00B98E) to white (#FFFFFF). Incorporate the Inter font for text, emphasizing the tagline "Everything Your Industry Needs, In One Place." Highlight the primary green (#00B98E) and secondary orange (#FF6922) colors in buttons and accents, maintaining a clean and professional layout.
+Create a social media image for the Stellar Global Supplies Web Platform featuring a modern glassmorphism design with a gradient mesh background from light green to white. Use the Inter font for text, with a large bold headline in primary green (#00B98E) and a secondary orange (#FF6922) for accents. Include product images and a professional layout that emphasizes speed and reliability.
 
 ---
 
 ## 💡 Post Angles
-- **LinkedIn**: Discover how Stellar Global Supplies is revolutionizing the procurement process for industrial buyers in India with a modern, SEO-optimized web platform showcasing over 500 products.
-- **X**: Tired of fragmented supplier options? Check out Stellar Global Supplies, your one-stop digital catalog for Stainless Steel and Mild Steel materials!
-- **Dev.to**: Building a high-performance static site with Next.js and Tailwind CSS: Lessons learned from developing the Stellar Global Supplies platform.
-- **Bluesky**: Just launched the Stellar Global Supplies platform! A seamless way for industrial buyers to find reliable suppliers. Explore now!
+- **LinkedIn**: Discover how Stellar Global Supplies is revolutionizing the procurement process for industrial materials in India with a modern, SEO-optimized web platform.
+- **X**: Just launched our new website! Explore 500+ industrial products with seamless navigation and fast performance. #NextJS #WebDevelopment
+- **Dev.to**: Building a static site with Next.js and Tailwind CSS: Lessons learned from optimizing performance and SEO for a B2B platform.
+- **Bluesky**: Excited to share our new platform for industrial supplies! Check out how we tackled performance and user experience challenges.
 
 ## 🏷️ Hashtags
-#NextJS, #TailwindCSS, #WebDevelopment, #B2B, #Ecommerce, #StaticSite, #AWS, #SEO, #React, #Glassmorphism, #PerformanceOptimization
+#NextJS, #React, #TailwindCSS, #WebDevelopment, #SEO, #StaticSite, #AWS, #PerformanceOptimization, #B2B, #IndustrialSupplies, #Glassmorphism
 
 ## 📌 Soundbites
-Stellar Global Supplies leverages Next.js and Tailwind CSS to deliver a high-performance static site for industrial procurement. With a 100/100 SEO score, it sets a new standard for digital catalogs in the B2B space.
+Our static site built with Next.js achieves a 90+ Lighthouse performance score while maintaining a 100/100 SEO score. The innovative use of OIDC for AWS authentication enhances security without compromising on performance.
 
 ## 🔍 SEO Keywords
-Stellar Global Supplies, B2B industrial supply platform, procurement solutions, stainless steel suppliers, mild steel materials, product catalog, SEO-optimized website, Next.js static site, Tailwind CSS design, AWS hosting solutions.
+Stellar Global Supplies, industrial supply platform, B2B procurement, stainless steel suppliers, mild steel suppliers, fasteners, SEO optimization, Next.js static site, AWS CloudFront, performance optimization, glassmorphism design.
