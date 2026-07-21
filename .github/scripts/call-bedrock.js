@@ -41,8 +41,9 @@ try {
   // Write request to file
   fs.writeFileSync(requestFile, JSON.stringify(request, null, 2));
   
-  // Call Bedrock using AWS CLI with fileb:// protocol
+  // Call Bedrock using AWS CLI with proper binary format handling
   const command = `aws bedrock-runtime invoke-model \\
+    --cli-binary-format raw-in-base64-out \\
     --model-id amazon.nova-pro-v1:0 \\
     --body fileb://${requestFile} \\
     --region ${process.env.AWS_REGION} \\
