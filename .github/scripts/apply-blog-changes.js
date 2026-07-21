@@ -16,28 +16,45 @@ function applyBlogChanges(blogFilePath, implementationPath) {
       process.exit(1);
     }
     
-    const implementationContent = fs.readFileSync(implementationPath, 'utf-8');
+    let implementationContent = fs.readFileSync(implementationPath, 'utf-8');
     
-    // Parse the implementation content
-    const fileBlocks = implementationContent.split(/FILE:\s*/).filter(block => block.trim());
+    // Remove conversational preamble - look for the first FILE: marker
+    const firstFileIndex = implementationContent.indexOf('FILE:');
+    if (firstFileIndex > 0) {
+      implementationContent = implementationContent.substring(firstFileIndex);
+    }
+    
+    // Parse the implementation content - extract structured data
+    const fileBlocks = [];
+    const filePattern = /FILE:\s*([^\n]+)/g;
+    const existsPattern = /EXISTS:\s*(yes|no)/i;
+    const actionPattern = /ACTION:\s*(create|update|skip)/i;
+    const contentPattern = /CONTENT:\n([\s\S]*?)(?=FILE:|$)/g;
+    
+    let match;
+    while ((match = filePattern.exec(implementationContent)) !== null) {
+      const filePath = match[1].trim();
+      const blockStart = match.index;
+      const blockEnd = implementationContent.indexOf('FILE:', blockStart + 1);
+      const block = implementationContent.substring(blockStart, blockEnd === -1 ? undefined : blockEnd);
+      
+      const existsMatch = block.match(existsPattern);
+      const actionMatch = block.match(actionPattern);
+      const contentMatch = block.match(contentPattern);
+      
+      if (filePath && actionMatch) {
+        fileBlocks.push({
+          filePath,
+          exists: existsMatch?.[1]?.toLowerCase() === 'yes',
+          action: actionMatch[1].toLowerCase(),
+          content: contentMatch?.[1]?.trim() || ''
+        });
+      }
+    }
     
     let changesApplied = 0;
     
-    for (const block of fileBlocks) {
-      const lines = block.split('\n');
-      const filePathMatch = lines[0]?.trim();
-      
-      if (!filePathMatch) continue;
-      
-      // Extract file path
-      const filePath = filePathMatch.split('\n')[0].trim();
-      
-      // Parse EXISTS, ACTION, and CONTENT
-      const existsMatch = block.match(/EXISTS:\s*(yes|no)/i);
-      const actionMatch = block.match(/ACTION:\s*(create|update|skip)/i);
-      
-      const exists = existsMatch?.[1]?.toLowerCase() === 'yes';
-      const action = actionMatch?.[1]?.toLowerCase();
+    for (const {filePath, exists, action, content} of fileBlocks) {
       
       console.log(`\n📄 File: ${filePath}`);
       console.log(`   Exists: ${exists}`);
@@ -49,14 +66,11 @@ function applyBlogChanges(blogFilePath, implementationPath) {
         continue;
       }
       
-      // Extract content
-      const contentMatch = block.match(/CONTENT:\n([\s\S]*)/);
-      if (!contentMatch) {
+      // Skip if no content
+      if (!content) {
         console.log(`   ⚠️  No content found, skipping`);
         continue;
       }
-      
-      const content = contentMatch[1].trim();
       
       // Handle create action
       if (action === 'create') {
