@@ -53,9 +53,11 @@ try {
     ${responseFile}`;
   
   console.log('Calling Bedrock Nova Pro...');
+  
+  // Execute command - response will be written to responseFile
   execSync(command, { stdio: 'inherit' });
   
-  // Read and save the response
+  // Read the response from the file
   const response = JSON.parse(fs.readFileSync(responseFile, 'utf8'));
   
   // Extract the text from the response - Bedrock returns it in a specific structure
