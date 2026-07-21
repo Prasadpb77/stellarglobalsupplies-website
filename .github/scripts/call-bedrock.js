@@ -33,8 +33,8 @@ try {
     ],
     "inferenceConfig": {
       "maxTokens": 8000,
-      "temperature": 0.2,
-      "topP": 0.9
+      "temperature": 0.1,
+      "topP": 0.8
     }
   };
 
