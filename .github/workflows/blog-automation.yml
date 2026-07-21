@@ -108,7 +108,7 @@ jobs:
             RESPONSE=$(aws bedrock-runtime invoke-model \
               --cli-binary-format raw-in-base64-out \
               --model-id amazon.nova-pro-v1:0 \
-              --body "$(node -e "console.log(require('fs').readFileSync('/tmp/bedrock-request.json', 'utf8').toString('base64'))")" \
+              --body "$(cat /tmp/bedrock-request.json)" \
               --region ${{ secrets.AWS_REGION }} \
               /tmp/bedrock-response.json)
             
