@@ -41,41 +41,48 @@ try {
   // Write request to file
   fs.writeFileSync(requestFile, JSON.stringify(request, null, 2));
   
-  // Call Bedrock using AWS CLI - the response body is in the file
+  // Call Bedrock using AWS CLI - base64 encode the request body
+  const requestJson = fs.readFileSync(requestFile, 'utf8');
+  const base64Body = Buffer.from(requestJson).toString('base64');
+  
   const command = `aws bedrock-runtime invoke-model \\
     --cli-binary-format raw-in-base64-out \\
     --model-id amazon.nova-pro-v1:0 \\
-    --body fileb://${requestFile} \\
+    --body "${base64Body}" \\
     --region ${process.env.AWS_REGION} \\
     ${responseFile}`;
   
   console.log('Calling Bedrock Nova Pro...');
   
-  // Execute command and capture stdout - Bedrock returns the response body in stdout
-  const stdout = execSync(command, { encoding: 'utf8' });
+  // Execute command - response is written to responseFile
+  execSync(command, { stdio: 'inherit' });
   
-  // Parse the response from stdout
-  const response = JSON.parse(stdout);
+  // Read the response from the file
+  const responseBody = fs.readFileSync(responseFile, 'utf8');
+  const response = JSON.parse(responseBody);
   
   console.log('Bedrock response structure:', JSON.stringify(response, null, 2).substring(0, 500));
   
-  // Extract the text from the response - Bedrock returns it in a specific structure
+  // Extract the text from the response
   let text = '';
   
-  // Try different response structures
-  if (response.output?.message?.content?.[0]?.text) {
-    text = response.output.message.content[0].text;
-  } else if (response.content) {
-    text = response.content;
-  } else if (response.completion) {
-    text = response.completion;
-  } else if (response.response?.text) {
-    text = response.response.text;
+  // With --cli-binary-format raw-in-base64-out, the body is base64 encoded
+  if (response.body) {
+    // The body is base64 encoded, decode it
+    const decodedBody = Buffer.from(response.body, 'base64').toString('utf8');
+    const bodyJson = JSON.parse(decodedBody);
+    text = bodyJson.output?.message?.content?.[0]?.text || bodyJson.content || bodyJson.completion || '';
   }
   
-  // If still no text, check if the entire response is the text
-  if (!text && typeof response === 'string') {
-    text = response;
+  // Try other response structures if body not found
+  if (!text) {
+    if (response.output?.message?.content?.[0]?.text) {
+      text = response.output.message.content[0].text;
+    } else if (response.content) {
+      text = response.content;
+    } else if (response.completion) {
+      text = response.completion;
+    }
   }
   
   if (!text) {
