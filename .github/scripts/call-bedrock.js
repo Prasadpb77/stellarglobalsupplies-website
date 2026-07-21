@@ -41,14 +41,10 @@ try {
   // Write request to file
   fs.writeFileSync(requestFile, JSON.stringify(request, null, 2));
   
-  // Call Bedrock using AWS CLI - base64 encode the JSON body
-  const requestJson = fs.readFileSync(requestFile, 'utf8');
-  const base64Body = Buffer.from(requestJson).toString('base64');
-  
+  // Call Bedrock using AWS CLI with fileb:// protocol
   const command = `aws bedrock-runtime invoke-model \\
-    --cli-binary-format raw-in-base64-out \\
     --model-id amazon.nova-pro-v1:0 \\
-    --body "${base64Body}" \\
+    --body fileb://${requestFile} \\
     --region ${process.env.AWS_REGION} \\
     ${responseFile}`;
   
@@ -60,20 +56,29 @@ try {
   // Read the response from the file
   const response = JSON.parse(fs.readFileSync(responseFile, 'utf8'));
   
+  console.log('Bedrock response structure:', JSON.stringify(response, null, 2).substring(0, 500));
+  
   // Extract the text from the response - Bedrock returns it in a specific structure
   let text = '';
-  if (response.output && response.output.message && response.output.message.content) {
-    text = response.output.message.content[0]?.text || '';
+  
+  // Try different response structures
+  if (response.output?.message?.content?.[0]?.text) {
+    text = response.output.message.content[0].text;
+  } else if (response.content) {
+    text = response.content;
+  } else if (response.completion) {
+    text = response.completion;
+  } else if (response.response?.text) {
+    text = response.response.text;
   }
   
-  // If no text found, try alternative paths
-  if (!text && response.body) {
-    const bodyResponse = JSON.parse(response.body);
-    text = bodyResponse.output?.message?.content?.[0]?.text || '';
+  // If still no text, check if the entire response is the text
+  if (!text && typeof response === 'string') {
+    text = response;
   }
   
   if (!text) {
-    console.error('No text found in Bedrock response:', JSON.stringify(response, null, 2));
+    console.error('No text found in Bedrock response. Full response:', JSON.stringify(response, null, 2));
     process.exit(1);
   }
   
