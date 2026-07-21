@@ -16,7 +16,11 @@ if (!blogContent || !blogSlug) {
 try {
   // Create the Bedrock request
   const request = {
-    "system": "You are an expert Next.js developer specializing in SEO-optimized blog implementations. You help companies create marketing-focused blog systems that promote their products and services.",
+    "system": [
+      {
+        "text": "You are an expert Next.js developer specializing in SEO-optimized blog implementations. You help companies create marketing-focused blog systems that promote their products and services."
+      }
+    ],
     "messages": [
       {
         "role": "user",
