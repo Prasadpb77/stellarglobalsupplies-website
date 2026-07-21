@@ -2,6 +2,9 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
 
+// Make the script async to use await
+(async () => {
+
 const requestFile = '/tmp/bedrock-request.json';
 const responseFile = '/tmp/bedrock-response.json';
 
@@ -58,7 +61,7 @@ try {
   
   const response = await client.send(command);
   
-  console.log('Bedrock response structure:', JSON.stringify(response, null, 2).substring(0, 500));
+  console.log('Bedrock response received');
   
   // Extract the text from the response
   let text = '';
@@ -81,3 +84,4 @@ try {
   console.error('Error calling Bedrock:', error.message);
   process.exit(1);
 }
+})();
