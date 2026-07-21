@@ -101,21 +101,8 @@ jobs:
             BLOG_CONTENT=$(cat "$file")
             BLOG_SLUG=$(basename "$file" .md)
             
-            # Create Bedrock request using helper script
-            node .github/scripts/create-bedrock-request.js "$BLOG_CONTENT" "$BLOG_SLUG"
-            
-            # Call Bedrock Nova Pro
-            RESPONSE=$(aws bedrock-runtime invoke-model \
-              --cli-binary-format raw-in-base64-out \
-              --model-id amazon.nova-pro-v1:0 \
-              --body fileb:///tmp/bedrock-request.json \
-              --region ${{ secrets.AWS_REGION }} \
-              /tmp/bedrock-response.json)
-            
-            # Extract response
-            cat /tmp/bedrock-response.json | jq -r '.output.message.content[0].text' > /tmp/blog-implementation.txt
-            
-            echo "Generated implementation saved to /tmp/blog-implementation.txt"
+            # Call Bedrock Nova Pro using helper script with arguments
+            node .github/scripts/call-bedrock.js "$BLOG_CONTENT" "$BLOG_SLUG"
             
             # Apply the changes
             node .github/scripts/apply-blog-changes.js "$file" /tmp/blog-implementation.txt
