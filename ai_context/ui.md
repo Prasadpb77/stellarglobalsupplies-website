@@ -50,6 +50,22 @@
 **Colors:** Dark navy background, white text, green accent links, subtle hover effects.
 **Mobile Behavior:** Single column, stacked layout, collapsible sections, full-width links.
 
+### Blog Listing Page
+**Route:** /blog
+**Purpose:** Display all blog posts in a grid layout with filtering by tags and search functionality.
+**Layout:** Hero section with gradient background and title "Industrial Supplies Insights". Grid layout showing blog post cards (3 columns desktop, 2 tablet, 1 mobile). Each card features featured image, tags, title, excerpt, date, and author. CTA section at bottom encouraging contact.
+**Key Components:** Blog card grid, tag badges, hero section with gradient, CTA section with contact buttons, structured data for SEO.
+**Colors:** White cards with subtle borders, green primary accents, dark text, gradient hero (primary-600 to primary-800), hover effects with shadow and border color changes.
+**Mobile Behavior:** Single column grid, stacked cards, full-width CTAs, reduced padding, touch-friendly card interactions.
+
+### Individual Blog Post Page
+**Route:** /blog/[slug]
+**Purpose:** Display full blog post content with optimized reading experience and strong CTAs.
+**Layout:** Full-width hero image with gradient overlay, blog title and meta info overlaid at bottom. Content area with max-width constraint for readability. Excerpt highlighted in styled box. Article content with proper heading hierarchy. Author info section. Back to blog link. Bottom CTA section with contact options.
+**Key Components:** Featured image hero with gradient overlay, tag badges, title overlay, date/author metadata, excerpt highlight box, article content with markdown rendering, author avatar and bio, navigation back to blog, contact CTAs with phone/email.
+**Colors:** White background, dark text for readability, green accents for CTAs and tags, hero gradient (black/80 to transparent), primary-50 for excerpt background, green left border for excerpt.
+**Mobile Behavior:** Reduced hero height, stacked layout, full-width content, larger touch targets for CTAs, simplified author section.
+
 ---
 
 ## Design System

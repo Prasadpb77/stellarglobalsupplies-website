@@ -42,9 +42,18 @@
 **Powered by:** Tel: and mailto: protocols, React component composition, Lucide React icons.
 **Why it's notable:** Each product has a contextual "Enquire Now" button that scrolls to contact section. Multiple CTAs strategically placed throughout the page.
 
+### AI-Powered Blog Automation
+**What it does:** Automatically generates and implements blog functionality when new markdown files are added to content/blog/. Creates SEO-optimized blog listing pages, individual post pages, and updates navigation without manual coding.
+**Powered by:** AWS Bedrock Nova Pro (amazon.nova-pro-v1:0), GitHub Actions, Node.js scripts, gray-matter for markdown parsing.
+**Why it's notable:** Zero manual coding required for blog implementation. Uses AI to analyze content and generate marketing-focused, SEO-optimized Next.js code. Smart file checking prevents overwrites. No artifacts saved to repository - direct commits only.
+
 ---
 
 ## Recently Shipped
+- **[July 2025]:** AI-powered blog automation with AWS Bedrock Nova Pro
+- **[July 2025]:** Automatic blog page generation from markdown files
+- **[July 2025]:** SEO-optimized blog listing and individual post pages
+- **[July 2025]:** Marketing-focused CTAs and company branding integration
 - **[June 2025]:** Fixed Products dropdown click issue with timeout-based hover logic
 - **[June 2025]:** Enhanced SEO with 20+ keywords and geographic targeting
 - **[June 2025]:** Migrated CI/CD to OIDC authentication for enhanced security
@@ -72,3 +81,4 @@ NONE
 - **Bundle Size:** Optimized with tree-shaking and SWC minification
 - **Cache Duration:** 1 year for static assets, 7 days for images
 - **Build Time:** ~30-60 seconds (GitHub Actions)
+- **Blog Automation:** ~2-3 minutes per blog post (including Bedrock API call)

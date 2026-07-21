@@ -6,6 +6,7 @@ import { Menu, X, ChevronDown, Phone } from "lucide-react";
 const NAV_LINKS = [
   { label: "Home",        href: "#home" },
   { label: "About",       href: "#about" },
+  { label: "Blog",        href: "/blog" },
   {
     label: "Products",
     href: "#products",

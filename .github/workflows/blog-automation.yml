@@ -1,0 +1,177 @@
+name: Blog Automation with AWS Bedrock Nova Pro
+
+on:
+  push:
+    paths:
+      - 'content/blog/**'
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      blog_file:
+        description: 'Specific blog file to process (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: write  # Required to commit changes
+  id-token: write  # Required for OIDC authentication
+
+jobs:
+  process-blog:
+    name: Process Blog with Bedrock Nova Pro
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Detect changed blog files
+        id: detect-changes
+        run: |
+          # Get list of changed/added markdown files in content/blog
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.blog_file }}" ]; then
+              CHANGED_FILES="${{ github.event.inputs.blog_file }}"
+            else
+              CHANGED_FILES=$(find content/blog -name "*.md" -type f | sort)
+            fi
+          else
+            # Get files changed in this push
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^content/blog/.*\.md$' || true)
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No blog files changed"
+            echo "changed_files=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Convert to JSON array
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Process each blog file
+        if: steps.detect-changes.outputs.changed_files != ''
+        run: |
+          CHANGED_FILES="${{ steps.detect-changes.outputs.changed_files }}"
+          
+          # Process each file
+          echo "$CHANGED_FILES" | while read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+            
+            echo "Processing: $file"
+            node .github/scripts/process-blog.js "$file"
+          done
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Generate blog implementation with Bedrock Nova Pro
+        run: |
+          CHANGED_FILES="${{ steps.detect-changes.outputs.changed_files }}"
+          
+          echo "$CHANGED_FILES" | while read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+            
+            echo "Generating implementation for: $file"
+            
+            # Extract blog content
+            BLOG_CONTENT=$(cat "$file")
+            BLOG_SLUG=$(basename "$file" .md)
+            
+            # Create Bedrock request
+            cat > /tmp/bedrock-request.json <<EOF
+            {
+              "system": "You are an expert Next.js developer specializing in SEO-optimized blog implementations. You help companies create marketing-focused blog systems that promote their products and services.",
+              "messages": [
+                {
+                  "role": "user",
+                  "content": [
+                    {
+                      "text": "I need you to analyze this blog post and generate/update the Next.js blog implementation for our website. The blog content is:\n\n${BLOG_CONTENT}\n\nCompany: Stellar Global Supplies - Premium stainless steel, mild steel, and industrial supplies supplier based in Pune, India.\n\nCurrent project structure:\n- Next.js 14 with App Router\n- TypeScript\n- Tailwind CSS\n- Static export (SSG)\n- Already has: components/BlogCard.tsx, app/blog/page.tsx, app/blog/[slug]/page.tsx, lib/blog.ts\n\nRequirements:\n1. Check if files exist before generating (don't overwrite existing files)\n2. If a file exists, provide only the DIFF/PATCH needed to update it\n3. If a file doesn't exist, provide the complete file content\n4. Ensure SEO optimization with meta tags, Open Graph, and structured data\n5. Include marketing CTAs for Stellar Global Supplies\n6. Use the blog slug: ${BLOG_SLUG}\n7. Follow the existing code style and patterns\n\nFiles to check/generate:\n- app/blog/page.tsx (blog listing - only if doesn't exist)\n- app/blog/[slug]/page.tsx (blog post page - only if doesn't exist)\n- components/BlogCard.tsx (already exists, don't modify)\n- lib/blog.ts (already exists, don't modify)\n- components/Navbar.tsx (add Blog link only if missing)\n\nFor each file, output in this format:\n\nFILE: path/to/file\nEXISTS: yes/no\nACTION: create/update/skip\nCONTENT:\n[full file content or diff]\n\nBe concise and only output what's needed."
+                    }
+                  ]
+                }
+              ],
+              "inferenceConfig": {
+                "maxTokens": 8000,
+                "temperature": 0.2,
+                "topP": 0.9
+              }
+            }
+            EOF
+            
+            # Call Bedrock Nova Pro
+            RESPONSE=$(aws bedrock-runtime invoke-model \
+              --model-id amazon.nova-pro-v1:0 \
+              --body "$(cat /tmp/bedrock-request.json)" \
+              --region ${{ secrets.AWS_REGION }} \
+              /tmp/bedrock-response.json)
+            
+            # Extract response
+            cat /tmp/bedrock-response.json | jq -r '.output.message.content[0].text' > /tmp/blog-implementation.txt
+            
+            echo "Generated implementation saved to /tmp/blog-implementation.txt"
+            
+            # Apply the changes
+            node .github/scripts/apply-blog-changes.js "$file" /tmp/blog-implementation.txt
+          done
+
+      - name: Commit and push changes
+        run: |
+          # Configure git
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Check if there are changes
+          if [[ -z $(git status --porcelain) ]]; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          # Stage all changes
+          git add -A
+          
+          # Create commit message based on number of files
+          FILE_COUNT=$(echo "${{ steps.detect-changes.outputs.changed_files }}" | wc -l)
+          if [ "$FILE_COUNT" -eq 1 ]; then
+            BLOG_TITLE=$(basename "${{ steps.detect-changes.outputs.changed_files }}" .md)
+            COMMIT_MSG="feat: add blog post - $BLOG_TITLE"
+          else
+            COMMIT_MSG="feat: add $FILE_COUNT blog posts"
+          fi
+          
+          # Commit
+          git commit -m "$COMMIT_MSG"
+          
+          # Push
+          git push origin HEAD:main
+          
+          echo "✅ Changes committed and pushed"
+
+      - name: Trigger deployment workflow
+        if: success()
+        run: |
+          echo "✅ Blog automation complete. Deployment will be triggered by the push."

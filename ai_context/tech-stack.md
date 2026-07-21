@@ -13,13 +13,13 @@ NONE — Static site generation (SSG) with Next.js export
 NONE — Static site with no database
 
 ## AI / ML
-NONE
+AWS Bedrock Nova Pro (amazon.nova-pro-v1:0) - AI-powered blog content generation and implementation
 
 ## Infrastructure & Cloud
 AWS S3 (static file hosting) · AWS CloudFront (CDN) · GitHub Actions (CI/CD)
 
 ## CI/CD & Observability
-GitHub Actions · ESLint 8 · TypeScript Compiler · SWC (compiler/minifier)
+GitHub Actions · ESLint 8 · TypeScript Compiler · SWC (compiler/minifier) · gray-matter (markdown parsing)
 
 ## Auth & Security
 OIDC (OpenID Connect) for AWS authentication · No user authentication in application

@@ -1,0 +1,15 @@
+{
+  "name": "Stellar Global Supplies",
+  "short_name": "Stellar SGS",
+  "description": "One-stop industrial supply partner — SS, MS & Fastening products from Pune, India.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EFFDF5",
+  "theme_color": "#00B98E",
+  "lang": "en-IN",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["business", "shopping", "productivity"]
+}

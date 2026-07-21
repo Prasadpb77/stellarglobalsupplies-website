@@ -258,6 +258,98 @@ The build process generates a static export in the `/out` directory:
 
 ---
 
+## 📝 Blog Automation System
+
+### AI-Powered Blog Implementation
+
+We use **AWS Bedrock Nova Pro** with **GitHub Actions** to automatically implement blog functionality when new markdown files are added to `content/blog/`.
+
+### How It Works
+
+```
+New blog markdown file added to content/blog/
+    ↓
+GitHub Actions workflow triggers
+    ↓
+AWS OIDC authentication (no secrets needed)
+    ↓
+Bedrock Nova Pro analyzes content
+    ↓
+Generates SEO-optimized blog pages
+    ↓
+Auto-commits changes
+    ↓
+Triggers deployment workflow
+    ↓
+Blog goes live on website
+```
+
+### Features
+
+- ✅ **Automatic Implementation** - No manual coding required
+- ✅ **SEO Optimized** - Meta tags, Open Graph, structured data
+- ✅ **Marketing Focus** - CTAs and company branding integrated
+- ✅ **Smart File Checking** - Only creates/updates what's needed
+- ✅ **No Artifacts** - Direct commit, no temporary files in repo
+- ✅ **Monthly Content** - Just add markdown files, workflow handles the rest
+
+### Usage
+
+1. **Add a blog post:**
+   ```bash
+   # Create new markdown file in content/blog/
+   content/blog/your-post-title.md
+   ```
+
+2. **Push to main:**
+   ```bash
+   git add content/blog/your-post-title.md
+   git commit -m "feat: add blog post about industrial supplies"
+   git push origin main
+   ```
+
+3. **Workflow automatically:**
+   - Detects the new file
+   - Generates blog listing and individual pages
+   - Updates navigation
+   - Commits changes
+   - Deploys to production
+
+### Blog Post Format
+
+```markdown
+---
+title: "Your Blog Post Title"
+date: "2026-07-20"
+excerpt: "Brief description for SEO and previews"
+image: "https://example.com/image.jpg"
+author: "Stellar Global Supplies"
+tags:
+  - supply chain
+  - B2B procurement
+  - industrial supplies
+---
+
+## Main Heading
+
+Your content here with **bold text** and markdown formatting.
+
+### Subheading
+
+More content...
+```
+
+### Required AWS Permissions
+
+Your AWS role needs Bedrock access:
+- `bedrock:InvokeModel` for `amazon.nova-pro-v1:0`
+
+### Documentation
+
+For detailed information, see [BLOG_AUTOMATION.md](./BLOG_AUTOMATION.md)
+
+---
+
 ## 🚢 Deployment & CI/CD
 
 ### Automated Deployment Pipeline
@@ -672,6 +764,15 @@ This is a private business platform. For feature requests or bug reports, please
 
 ## 🚀 Recent Updates
 
+**2025-07-21 - Blog Automation System**
+- ✅ AI-powered blog implementation with AWS Bedrock Nova Pro
+- ✅ Automatic blog page generation from markdown files
+- ✅ SEO-optimized blog listing and individual post pages
+- ✅ Marketing-focused CTAs and company branding
+- ✅ Smart file checking (no overwrites)
+- ✅ No artifacts workflow (direct commits)
+- ✅ Blog navigation added to site
+
 **2025-06-07 - Major Optimization Release**
 - ✅ Fixed Products dropdown click issue
 - ✅ Enhanced SEO (20+ keywords, geo tags)
@@ -722,5 +823,5 @@ This README provides comprehensive information about the Stellar Global Supplies
 ---
 
 **Built with ❤️ by Prasad Bhavsar**  
-**Last Updated:** 2025-06-07  
-**Version:** 1.0.0
+**Last Updated:** 2025-07-21  
+**Version:** 1.1.0
