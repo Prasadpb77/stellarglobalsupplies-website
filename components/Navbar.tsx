@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Menu, X, ChevronDown, Phone } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 
 const NAV_LINKS = [
   { label: "Home",        href: "#home" },
@@ -11,9 +12,9 @@ const NAV_LINKS = [
     label: "Products",
     href: "#products",
     children: [
-      { label: "Mild Steel Products",        href: "#mild-steel" },
-      { label: "Stainless Steel Products",   href: "#stainless-steel" },
-      { label: "Locking & Fastening",        href: "#fastening" },
+      { label: "Mild Steel Products",        href: "#products", tab: "mild-steel" },
+      { label: "Stainless Steel Products",   href: "#products", tab: "stainless-steel" },
+      { label: "Locking & Fastening",        href: "#products", tab: "fastening" },
     ],
   },
   { label: "Clients",     href: "#clients" },
@@ -26,6 +27,8 @@ export default function Navbar() {
   const [dropdownOpen,  setDropdownOpen]  = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const router   = useRouter();
+  const pathname = usePathname();
 
   // Scroll detection
   const handleScroll = useCallback(() => {
@@ -52,16 +55,71 @@ export default function Navbar() {
     return () => observer.disconnect();
   }, []);
 
-  const handleNavClick = (href: string) => {
-    setMobileOpen(false);
-    setDropdownOpen(false);
-    if (dropdownTimeoutRef.current) {
-      clearTimeout(dropdownTimeoutRef.current);
-      dropdownTimeoutRef.current = null;
+  /** Scroll to a hash anchor — works on both home page and other pages */
+  const scrollToHash = useCallback((hash: string) => {
+    const el = document.querySelector(hash);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  }, []);
+
+  /** Activate a product tab by clicking its button */
+  const activateProductTab = useCallback((tabId: string) => {
+    const btn = document.getElementById(`tab-${tabId}`) as HTMLButtonElement | null;
+    if (btn) btn.click();
+  }, []);
+
+  const handleNavClick = useCallback(
+    (href: string, tab?: string) => {
+      setMobileOpen(false);
+      setDropdownOpen(false);
+      if (dropdownTimeoutRef.current) {
+        clearTimeout(dropdownTimeoutRef.current);
+        dropdownTimeoutRef.current = null;
+      }
+
+      // External page route (e.g. /blog)
+      if (!href.startsWith("#")) {
+        router.push(href);
+        return;
+      }
+
+      // Hash link — if we're already on the home page, scroll directly
+      if (pathname === "/") {
+        scrollToHash(href);
+        if (tab) {
+          // Give the scroll a moment then activate the tab
+          setTimeout(() => activateProductTab(tab), 400);
+        }
+      } else {
+        // Navigate home first, then scroll after page load
+        router.push("/");
+        // Store intent in sessionStorage so home page can pick it up
+        sessionStorage.setItem("scrollTo", href);
+        if (tab) sessionStorage.setItem("activateTab", tab);
+      }
+    },
+    [pathname, router, scrollToHash, activateProductTab]
+  );
+
+  // On home page load, check if we need to scroll to a section
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const scrollTo = sessionStorage.getItem("scrollTo");
+    const tabId    = sessionStorage.getItem("activateTab");
+    if (!scrollTo) return;
+
+    sessionStorage.removeItem("scrollTo");
+    sessionStorage.removeItem("activateTab");
+
+    // Wait for page to render
+    const timer = setTimeout(() => {
+      scrollToHash(scrollTo);
+      if (tabId) setTimeout(() => activateProductTab(tabId), 400);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [pathname, scrollToHash, activateProductTab]);
 
   const handleDropdownEnter = () => {
     if (dropdownTimeoutRef.current) {
@@ -121,7 +179,7 @@ export default function Navbar() {
 
             {/* Logo */}
             <a
-              href="#home"
+              href="/"
               onClick={(e) => { e.preventDefault(); handleNavClick("#home"); }}
               className="flex items-center gap-3 group"
               aria-label="Stellar Global Supplies – Home"
@@ -149,8 +207,8 @@ export default function Navbar() {
               {NAV_LINKS.map((link) =>
                 link.children ? (
                   /* Dropdown */
-                  <div 
-                    key={link.label} 
+                  <div
+                    key={link.label}
                     className="relative"
                     onMouseEnter={handleDropdownEnter}
                     onMouseLeave={handleDropdownLeave}
@@ -159,7 +217,7 @@ export default function Navbar() {
                       className={`nav-link flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-primary-50 ${
                         activeSection === "products" ? "active" : ""
                       }`}
-                      onClick={() => setDropdownOpen((o) => !o)}
+                      onClick={() => handleNavClick(link.href)}
                       aria-haspopup="true"
                       aria-expanded={dropdownOpen}
                     >
@@ -178,15 +236,14 @@ export default function Navbar() {
                         onMouseLeave={handleDropdownLeave}
                       >
                         {link.children.map((child) => (
-                          <a
+                          <button
                             key={child.label}
-                            href={child.href}
-                            onClick={(e) => { e.preventDefault(); handleNavClick(child.href); }}
-                            className="block px-4 py-2.5 text-sm text-brand-dark/80 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                            onClick={() => handleNavClick(child.href, (child as any).tab)}
+                            className="w-full text-left block px-4 py-2.5 text-sm text-brand-dark/80 hover:bg-primary-50 hover:text-primary-600 transition-colors"
                             role="menuitem"
                           >
                             {child.label}
-                          </a>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -194,7 +251,7 @@ export default function Navbar() {
                 ) : (
                   <a
                     key={link.label}
-                    href={link.href}
+                    href={link.href.startsWith("#") ? link.href : link.href}
                     onClick={(e) => { e.preventDefault(); handleNavClick(link.href); }}
                     className={`nav-link px-3 py-2 rounded-lg hover:bg-primary-50 ${
                       activeSection === link.href.replace("#", "") ? "active" : ""
@@ -248,20 +305,19 @@ export default function Navbar() {
                     {link.label}
                   </p>
                   {link.children.map((child) => (
-                    <a
+                    <button
                       key={child.label}
-                      href={child.href}
-                      onClick={(e) => { e.preventDefault(); handleNavClick(child.href); }}
-                      className="block px-5 py-2 text-sm text-brand-dark/80 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                      onClick={() => handleNavClick(child.href, (child as any).tab)}
+                      className="w-full text-left block px-5 py-2 text-sm text-brand-dark/80 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
                     >
                       {child.label}
-                    </a>
+                    </button>
                   ))}
                 </div>
               ) : (
                 <a
                   key={link.label}
-                  href={link.href}
+                  href={link.href.startsWith("#") ? link.href : link.href}
                   onClick={(e) => { e.preventDefault(); handleNavClick(link.href); }}
                   className="block px-3 py-2.5 text-sm font-medium text-brand-dark hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors mt-1"
                 >
