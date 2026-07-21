@@ -28,13 +28,6 @@ jobs:
       - name: Build static export
         run: npm run build
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: out
-          path: out/
-          retention-days: 1
-
   deploy:
     name: Deploy to S3 + Invalidate CloudFront
     needs: lint-and-build
@@ -43,11 +36,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: out
-          path: out/
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build static export
+        run: npm run build
 
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
