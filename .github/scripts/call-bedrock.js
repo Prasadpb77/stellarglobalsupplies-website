@@ -26,7 +26,7 @@ try {
         "role": "user",
         "content": [
           {
-            "text": `CRITICAL: You must follow this EXACT format for your response. Do not add any conversational text, explanations, or pleasantries.\n\nAnalyze this blog post and generate/update the Next.js blog implementation:\n\n${blogContent}\n\nCompany: Stellar Global Supplies - Premium stainless steel, mild steel, and industrial supplies supplier based in Pune, India.\n\nRequirements:\n- Next.js 14 with App Router, TypeScript, Tailwind CSS, Static export (SSG)\n- SEO optimization with meta tags, Open Graph, and structured data\n- Marketing CTAs for Stellar Global Supplies\n- Blog slug: ${blogSlug}\n\nFiles to check/generate:\n- app/blog/page.tsx (blog listing)\n- app/blog/[slug]/page.tsx (blog post page)\n- components/Navbar.tsx (add Blog link if missing)\n\nOUTPUT FORMAT (follow exactly):\n\nFILE: path/to/file\nEXISTS: yes/no\nACTION: create/update/skip\nCONTENT:\n[full file content or diff]\n\nRepeat for each file. Start immediately with FILE:.`
+            "text": `You are a code generator. Output ONLY the following format, nothing else:\n\nFILE: app/blog/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\n[TypeScript code here]\n\nFILE: app/blog/[slug]/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\n[TypeScript code here]\n\nFILE: components/Navbar.tsx\nEXISTS: yes\nACTION: update\nCONTENT:\n[TypeScript diff here]\n\nBlog content to implement:\n${blogContent}\n\nBlog slug: ${blogSlug}\n\nStart now with FILE:`
           }
         ]
       }
