@@ -4,17 +4,23 @@ const fs = require('fs');
 const requestFile = '/tmp/bedrock-request.json';
 const responseFile = '/tmp/bedrock-response.json';
 
-// Get blog content and slug from command line arguments
-const blogContent = process.argv[2];
+// Get blog FILE PATH (not raw content) and slug from command line arguments
+const blogFilePath = process.argv[2];
 const blogSlug = process.argv[3];
 
-if (!blogContent || !blogSlug) {
-  console.error('Usage: call-bedrock.js <blog-content> <blog-slug>');
+if (!blogFilePath || !blogSlug) {
+  console.error('Usage: call-bedrock.js <blog-file-path> <blog-slug>');
   process.exit(1);
 }
 
+// Read blog content from file (avoids shell escaping issues with large content)
+if (!fs.existsSync(blogFilePath)) {
+  console.error(`❌ Blog file not found: ${blogFilePath}`);
+  process.exit(1);
+}
+const blogContent = fs.readFileSync(blogFilePath, 'utf-8');
+
 try {
-  // Create the Bedrock request
   const request = {
     "system": [
       {
@@ -26,7 +32,7 @@ try {
         "role": "user",
         "content": [
           {
-            "text": `Generate code for a Next.js blog. Output ONLY file paths and code, nothing else.\n\nExample output format:\nFILE: app/blog/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\nimport React from 'react';\n// ... code here ...\n\nFILE: app/blog/[slug]/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\nimport React from 'react';\n// ... code here ...\n\nBlog: ${blogContent}\nSlug: ${blogSlug}\n\nStart with FILE:`
+            "text": `Generate code for a Next.js blog. Output ONLY file paths and code using EXACTLY this format for each file. Do NOT add any explanation before or after.\n\nRequired output format per file:\nFILE: <relative/path/to/file>\nEXISTS: yes|no\nACTION: create|update|skip\nCONTENT:\n<full file content here, no markdown fences>\n\nFiles to generate:\n1. app/blog/page.tsx - Blog listing page\n2. app/blog/[slug]/page.tsx - Individual blog post page\n3. lib/blog.ts - Blog utility functions\n4. components/BlogPostPreview.tsx - Blog preview card component\n5. content/blog/${blogSlug}.md - Blog markdown file (ACTION: skip if already exists)\n\nBlog content:\n${blogContent}\n\nSlug: ${blogSlug}\n\nStart immediately with FILE:`
           }
         ]
       }
@@ -38,40 +44,29 @@ try {
     }
   };
 
-  // Write request to file
   fs.writeFileSync(requestFile, JSON.stringify(request, null, 2));
   
-  // Call Bedrock using AWS CLI
-  const command = `aws bedrock-runtime invoke-model \\
-    --cli-binary-format raw-in-base64-out \\
-    --model-id amazon.nova-pro-v1:0 \\
-    --body fileb://${requestFile} \\
-    --region ${process.env.AWS_REGION} \\
+  const command = `aws bedrock-runtime invoke-model \
+    --cli-binary-format raw-in-base64-out \
+    --model-id amazon.nova-pro-v1:0 \
+    --body fileb://${requestFile} \
+    --region ${process.env.AWS_REGION} \
     ${responseFile}`;
   
   console.log('Calling Bedrock Nova Pro...');
-  
-  // Execute command - response is written to responseFile
   execSync(command, { stdio: 'inherit' });
   
-  // Read the response from the file
   const responseBody = fs.readFileSync(responseFile, 'utf8');
   const response = JSON.parse(responseBody);
   
-  console.log('Bedrock response structure:', JSON.stringify(response, null, 2).substring(0, 500));
-  
-  // Extract the text from the response
   let text = '';
   
-  // With --cli-binary-format raw-in-base64-out, the body is base64 encoded
   if (response.body) {
-    // The body is base64 encoded, decode it
     const decodedBody = Buffer.from(response.body, 'base64').toString('utf8');
     const bodyJson = JSON.parse(decodedBody);
     text = bodyJson.output?.message?.content?.[0]?.text || bodyJson.content || bodyJson.completion || '';
   }
   
-  // Try other response structures if body not found
   if (!text) {
     if (response.output?.message?.content?.[0]?.text) {
       text = response.output.message.content[0].text;

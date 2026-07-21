@@ -23,122 +23,105 @@ function applyBlogChanges(blogFilePath, implementationPath) {
     if (firstFileIndex > 0) {
       implementationContent = implementationContent.substring(firstFileIndex);
     }
-    
-    // Parse the implementation content - extract structured data
-    const fileBlocks = [];
-    const filePattern = /FILE:\s*([^\n]+)/g;
-    const existsPattern = /EXISTS:\s*(yes|no)/i;
-    const actionPattern = /ACTION:\s*(create|update|skip)/i;
-    const contentPattern = /CONTENT:\n([\s\S]*?)(?=FILE:|$)/g;
-    
-    let match;
-    while ((match = filePattern.exec(implementationContent)) !== null) {
-      const filePath = match[1].trim();
-      const blockStart = match.index;
-      const blockEnd = implementationContent.indexOf('FILE:', blockStart + 1);
-      const block = implementationContent.substring(blockStart, blockEnd === -1 ? undefined : blockEnd);
-      
-      const existsMatch = block.match(existsPattern);
-      const actionMatch = block.match(actionPattern);
-      const contentMatch = block.match(contentPattern);
-      
-      if (filePath && actionMatch) {
-        fileBlocks.push({
-          filePath,
-          exists: existsMatch?.[1]?.toLowerCase() === 'yes',
-          action: actionMatch[1].toLowerCase(),
-          content: contentMatch?.[1]?.trim() || ''
-        });
+
+    // Split into blocks by FILE: marker
+    // Each block starts with "FILE: <path>" and ends before the next "FILE:" or end of string
+    const rawBlocks = implementationContent.split(/(?=^FILE:)/m).filter(b => b.trim());
+
+    const fileBlocks = rawBlocks.map(block => {
+      // Extract file path
+      const filePathMatch = block.match(/^FILE:\s*(.+)/m);
+      if (!filePathMatch) return null;
+      const filePath = filePathMatch[1].trim();
+
+      // Extract EXISTS
+      const existsMatch = block.match(/^EXISTS:\s*(yes|no)/im);
+      const exists = existsMatch ? existsMatch[1].toLowerCase() === 'yes' : false;
+
+      // Extract ACTION
+      const actionMatch = block.match(/^ACTION:\s*(create|update|skip)/im);
+      const action = actionMatch ? actionMatch[1].toLowerCase() : 'skip';
+
+      // Extract CONTENT — everything after "CONTENT:\n" to end of block
+      // Strip optional markdown code fences (```tsx, ```ts, ```jsx, ```, etc.)
+      const contentMatch = block.match(/^CONTENT:\s*\n([\s\S]*)/im);
+      let content = '';
+      if (contentMatch) {
+        content = contentMatch[1].trim();
+        // Strip leading/trailing code fences if present
+        content = content.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
       }
+
+      return { filePath, exists, action, content };
+    }).filter(Boolean);
+
+    if (fileBlocks.length === 0) {
+      console.error('❌ No FILE blocks found in implementation output.');
+      console.log('Raw implementation content (first 500 chars):');
+      console.log(implementationContent.substring(0, 500));
+      process.exit(1);
     }
-    
+
     let changesApplied = 0;
     
-    for (const {filePath, exists, action, content} of fileBlocks) {
-      
+    for (const { filePath, exists, action, content } of fileBlocks) {
       console.log(`\n📄 File: ${filePath}`);
       console.log(`   Exists: ${exists}`);
       console.log(`   Action: ${action}`);
       
-      // Skip if action is skip
       if (action === 'skip') {
         console.log(`   ⏭️  Skipping`);
         continue;
       }
       
-      // Skip if no content
       if (!content) {
         console.log(`   ⚠️  No content found, skipping`);
         continue;
       }
-      
-      // Handle create action
+
+      const fullPath = path.join(process.cwd(), filePath);
+      const dir = path.dirname(fullPath);
+
       if (action === 'create') {
-        if (exists) {
-          console.log(`   ⚠️  File exists but action is create, skipping to avoid overwrite`);
+        if (fs.existsSync(fullPath)) {
+          console.log(`   ⚠️  File already exists, skipping to avoid overwrite`);
           continue;
         }
-        
-        // Create directory if needed
-        const fullPath = path.join(process.cwd(), filePath);
-        const dir = path.dirname(fullPath);
-        
+
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
           console.log(`   📁 Created directory: ${dir}`);
         }
-        
-        // Write file
+
         fs.writeFileSync(fullPath, content, 'utf-8');
         console.log(`   ✅ Created: ${filePath}`);
         changesApplied++;
-      }
-      
-      // Handle update action
-      else if (action === 'update') {
-        if (!exists) {
+
+      } else if (action === 'update') {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+
+        if (!fs.existsSync(fullPath)) {
           console.log(`   ⚠️  File doesn't exist but action is update, creating instead`);
-          // Create directory if needed
-          const fullPath = path.join(process.cwd(), filePath);
-          const dir = path.dirname(fullPath);
-          
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-          }
-          
           fs.writeFileSync(fullPath, content, 'utf-8');
           console.log(`   ✅ Created: ${filePath}`);
           changesApplied++;
           continue;
         }
-        
-        // For existing files, apply the diff/patch
-        const fullPath = path.join(process.cwd(), filePath);
-        const currentContent = fs.readFileSync(fullPath, 'utf-8');
-        
-        // Check if content is a diff or full file
+
+        // For existing files: check if content is a diff or full replacement
         if (content.startsWith('---') || content.startsWith('diff') || content.startsWith('@@')) {
-          // It's a diff, try to apply it
-          console.log(`   🔄 Applying patch...`);
-          
-          // Simple patch application - look for specific patterns
-          // This is a simplified version; in production, use a proper patch library
-          let updatedContent = currentContent;
-          
-          // Look for additions (lines starting with +)
-          const additions = content.split('\n').filter(line => line.startsWith('+') && !line.startsWith('+++'));
-          
-          // Look for the specific section to update
-          if (filePath.includes('Navbar.tsx')) {
-            // Special handling for Navbar - add Blog link if missing
-            if (!currentContent.includes('{ label: "Blog"') && !currentContent.includes('href: "/blog"')) {
-              // Find the NAV_LINKS array and add Blog link
+          // It's a diff — apply special handling for known files
+          const currentContent = fs.readFileSync(fullPath, 'utf-8');
+
+          if (filePath.includes('Navbar.tsx') || filePath.includes('navbar.tsx')) {
+            if (!currentContent.includes('href: "/blog"') && !currentContent.includes("href: '/blog'")) {
               const blogLinkMatch = content.match(/\+.*\{ label: "Blog".*\}/);
               if (blogLinkMatch) {
                 const blogLink = blogLinkMatch[0].substring(1).trim();
-                // Insert after Home link
-                updatedContent = currentContent.replace(
-                  /{ label: "Home",\s*href: "#home" }/,
+                const updatedContent = currentContent.replace(
+                  /\{ label: "Home",\s*href: "#home" \}/,
                   `{ label: "Home",        href: "#home" },\n  { label: "Blog",        href: "/blog" }`
                 );
                 fs.writeFileSync(fullPath, updatedContent, 'utf-8');
@@ -148,11 +131,13 @@ function applyBlogChanges(blogFilePath, implementationPath) {
               }
             }
           }
-          
+
           console.log(`   ⚠️  Could not apply patch automatically, manual review needed`);
         } else {
-          // It's full content, only update if explicitly told to
-          console.log(`   ⚠️  Full content provided for existing file, skipping to preserve existing code`);
+          // Full content replacement
+          fs.writeFileSync(fullPath, content, 'utf-8');
+          console.log(`   ✅ Updated: ${filePath}`);
+          changesApplied++;
         }
       }
     }
@@ -180,7 +165,5 @@ if (!blogFilePath || !implementationPath) {
   process.exit(1);
 }
 
-// Apply changes
 const success = applyBlogChanges(blogFilePath, implementationPath);
-
 process.exit(success ? 0 : 1);

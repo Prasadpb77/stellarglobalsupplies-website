@@ -13,8 +13,8 @@ on:
         type: string
 
 permissions:
-  contents: write  # Required to commit changes
-  id-token: write  # Required for OIDC authentication
+  contents: write
+  id-token: write
 
 jobs:
   process-blog:
@@ -39,7 +39,6 @@ jobs:
       - name: Detect changed blog files
         id: detect-changes
         run: |
-          # Get list of changed/added markdown files in content/blog
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             if [ -n "${{ github.event.inputs.blog_file }}" ]; then
               CHANGED_FILES="${{ github.event.inputs.blog_file }}"
@@ -47,7 +46,6 @@ jobs:
               CHANGED_FILES=$(find content/blog -name "*.md" -type f | sort)
             fi
           else
-            # Get files changed in this push
             CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^content/blog/.*\.md$' || true)
           fi
 
@@ -60,7 +58,6 @@ jobs:
           echo "Changed files:"
           echo "$CHANGED_FILES"
           
-          # Convert to JSON array
           echo "changed_files<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -70,7 +67,6 @@ jobs:
         run: |
           CHANGED_FILES="${{ steps.detect-changes.outputs.changed_files }}"
           
-          # Process each file
           echo "$CHANGED_FILES" | while read -r file; do
             if [ -z "$file" ]; then
               continue
@@ -97,12 +93,11 @@ jobs:
             
             echo "Generating implementation for: $file"
             
-            # Extract blog content
-            BLOG_CONTENT=$(cat "$file")
+            # Extract slug from filename
             BLOG_SLUG=$(basename "$file" .md)
             
-            # Call Bedrock Nova Pro using helper script with arguments
-            node .github/scripts/call-bedrock.js "$BLOG_CONTENT" "$BLOG_SLUG"
+            # Pass FILE PATH (not content) to avoid shell escaping issues with large content
+            node .github/scripts/call-bedrock.js "$file" "$BLOG_SLUG"
             
             # Apply the changes
             node .github/scripts/apply-blog-changes.js "$file" /tmp/blog-implementation.txt
@@ -110,20 +105,16 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          # Configure git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Check if there are changes
           if [[ -z $(git status --porcelain) ]]; then
             echo "No changes to commit"
             exit 0
           fi
           
-          # Stage all changes
           git add -A
           
-          # Create commit message based on number of files
           FILE_COUNT=$(echo "${{ steps.detect-changes.outputs.changed_files }}" | wc -l)
           if [ "$FILE_COUNT" -eq 1 ]; then
             BLOG_TITLE=$(basename "${{ steps.detect-changes.outputs.changed_files }}" .md)
@@ -132,10 +123,7 @@ jobs:
             COMMIT_MSG="feat: add $FILE_COUNT blog posts"
           fi
           
-          # Commit
           git commit -m "$COMMIT_MSG"
-          
-          # Push
           git push origin HEAD:main
           
           echo "✅ Changes committed and pushed"
@@ -144,4 +132,3 @@ jobs:
         if: success()
         run: |
           echo "✅ Blog automation complete. Deployment will be triggered by the push."
-
