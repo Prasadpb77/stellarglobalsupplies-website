@@ -41,11 +41,14 @@ try {
   // Write request to file
   fs.writeFileSync(requestFile, JSON.stringify(request, null, 2));
   
-  // Call Bedrock using AWS CLI
+  // Call Bedrock using AWS CLI - base64 encode the JSON body
+  const requestJson = fs.readFileSync(requestFile, 'utf8');
+  const base64Body = Buffer.from(requestJson).toString('base64');
+  
   const command = `aws bedrock-runtime invoke-model \\
     --cli-binary-format raw-in-base64-out \\
     --model-id amazon.nova-pro-v1:0 \\
-    --body fileb://${requestFile} \\
+    --body "${base64Body}" \\
     --region ${process.env.AWS_REGION} \\
     ${responseFile}`;
   
@@ -54,7 +57,23 @@ try {
   
   // Read and save the response
   const response = JSON.parse(fs.readFileSync(responseFile, 'utf8'));
-  const text = response.output?.message?.content?.[0]?.text || JSON.stringify(response);
+  
+  // Extract the text from the response - Bedrock returns it in a specific structure
+  let text = '';
+  if (response.output && response.output.message && response.output.message.content) {
+    text = response.output.message.content[0]?.text || '';
+  }
+  
+  // If no text found, try alternative paths
+  if (!text && response.body) {
+    const bodyResponse = JSON.parse(response.body);
+    text = bodyResponse.output?.message?.content?.[0]?.text || '';
+  }
+  
+  if (!text) {
+    console.error('No text found in Bedrock response:', JSON.stringify(response, null, 2));
+    process.exit(1);
+  }
   
   fs.writeFileSync('/tmp/blog-implementation.txt', text);
   console.log('Generated implementation saved to /tmp/blog-implementation.txt');
