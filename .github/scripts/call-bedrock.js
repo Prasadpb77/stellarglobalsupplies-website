@@ -26,7 +26,7 @@ try {
         "role": "user",
         "content": [
           {
-            "text": `You are a code generator. Output ONLY the following format, nothing else:\n\nFILE: app/blog/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\n[TypeScript code here]\n\nFILE: app/blog/[slug]/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\n[TypeScript code here]\n\nFILE: components/Navbar.tsx\nEXISTS: yes\nACTION: update\nCONTENT:\n[TypeScript diff here]\n\nBlog content to implement:\n${blogContent}\n\nBlog slug: ${blogSlug}\n\nStart now with FILE:`
+            "text": `MANDATORY INSTRUCTIONS - FOLLOW EXACTLY:\n\n1. You are a CODE GENERATOR, not a conversational AI\n2. Output ONLY the structured format below\n3. NO explanations, NO pleasantries, NO introductory text\n4. Start your response IMMEDIATELY with "FILE:"\n\nREQUIRED OUTPUT FORMAT:\nFILE: <filepath>\nEXISTS: <yes/no>\nACTION: <create/update/skip>\nCONTENT:\n<code or diff>\n\nFILES TO GENERATE:\n- app/blog/page.tsx (blog listing page)\n- app/blog/[slug]/page.tsx (individual blog post page)\n- components/Navbar.tsx (add Blog navigation link)\n\nBLOG CONTENT:\n${blogContent}\n\nBLOG SLUG: ${blogSlug}\n\nNOW OUTPUT THE STRUCTURED RESPONSE STARTING WITH "FILE:":`
           }
         ]
       }
