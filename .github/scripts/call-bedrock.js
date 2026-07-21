@@ -41,7 +41,7 @@ try {
   // Write request to file
   fs.writeFileSync(requestFile, JSON.stringify(request, null, 2));
   
-  // Call Bedrock using AWS CLI with proper binary format handling
+  // Call Bedrock using AWS CLI - the response body is in the file
   const command = `aws bedrock-runtime invoke-model \\
     --cli-binary-format raw-in-base64-out \\
     --model-id amazon.nova-pro-v1:0 \\
@@ -51,11 +51,11 @@ try {
   
   console.log('Calling Bedrock Nova Pro...');
   
-  // Execute command - response will be written to responseFile
-  execSync(command, { stdio: 'inherit' });
+  // Execute command and capture stdout - Bedrock returns the response body in stdout
+  const stdout = execSync(command, { encoding: 'utf8' });
   
-  // Read the response from the file
-  const response = JSON.parse(fs.readFileSync(responseFile, 'utf8'));
+  // Parse the response from stdout
+  const response = JSON.parse(stdout);
   
   console.log('Bedrock response structure:', JSON.stringify(response, null, 2).substring(0, 500));
   
