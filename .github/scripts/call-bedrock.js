@@ -1,5 +1,6 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
+const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
 
 const requestFile = '/tmp/bedrock-request.json';
 const responseFile = '/tmp/bedrock-response.json';
@@ -41,49 +42,32 @@ try {
   // Write request to file
   fs.writeFileSync(requestFile, JSON.stringify(request, null, 2));
   
-  // Call Bedrock using AWS CLI - base64 encode the request body
-  const requestJson = fs.readFileSync(requestFile, 'utf8');
-  const base64Body = Buffer.from(requestJson).toString('base64');
+  // Call Bedrock using AWS SDK for more reliable response handling
+  const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION });
   
-  const command = `aws bedrock-runtime invoke-model \\
-    --cli-binary-format raw-in-base64-out \\
-    --model-id amazon.nova-pro-v1:0 \\
-    --body "${base64Body}" \\
-    --region ${process.env.AWS_REGION} \\
-    ${responseFile}`;
+  const requestBody = JSON.parse(fs.readFileSync(requestFile, 'utf8'));
+  
+  const command = new InvokeModelCommand({
+    modelId: 'amazon.nova-pro-v1:0',
+    body: JSON.stringify(requestBody),
+    contentType: 'application/json',
+    accept: 'application/json'
+  });
   
   console.log('Calling Bedrock Nova Pro...');
   
-  // Execute command - response is written to responseFile
-  execSync(command, { stdio: 'inherit' });
-  
-  // Read the response from the file
-  const responseBody = fs.readFileSync(responseFile, 'utf8');
-  const response = JSON.parse(responseBody);
+  const response = await client.send(command);
   
   console.log('Bedrock response structure:', JSON.stringify(response, null, 2).substring(0, 500));
   
   // Extract the text from the response
   let text = '';
   
-  // With --cli-binary-format raw-in-base64-out, the body is base64 encoded
-  if (response.body) {
-    // The body is base64 encoded, decode it
-    const decodedBody = Buffer.from(response.body, 'base64').toString('utf8');
-    const bodyJson = JSON.parse(decodedBody);
-    text = bodyJson.output?.message?.content?.[0]?.text || bodyJson.content || bodyJson.completion || '';
-  }
+  // The response body is a Uint8Array, convert to string
+  const responseBody = Buffer.from(response.body).toString('utf8');
+  const responseJson = JSON.parse(responseBody);
   
-  // Try other response structures if body not found
-  if (!text) {
-    if (response.output?.message?.content?.[0]?.text) {
-      text = response.output.message.content[0].text;
-    } else if (response.content) {
-      text = response.content;
-    } else if (response.completion) {
-      text = response.completion;
-    }
-  }
+  text = responseJson.output?.message?.content?.[0]?.text || responseJson.content || responseJson.completion || '';
   
   if (!text) {
     console.error('No text found in Bedrock response. Full response:', JSON.stringify(response, null, 2));
