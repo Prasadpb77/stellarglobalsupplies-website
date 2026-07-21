@@ -26,7 +26,7 @@ try {
         "role": "user",
         "content": [
           {
-            "text": `MANDATORY INSTRUCTIONS - FOLLOW EXACTLY:\n\n1. You are a CODE GENERATOR, not a conversational AI\n2. Output ONLY the structured format below\n3. NO explanations, NO pleasantries, NO introductory text\n4. Start your response IMMEDIATELY with "FILE:"\n\nREQUIRED OUTPUT FORMAT:\nFILE: <filepath>\nEXISTS: <yes/no>\nACTION: <create/update/skip>\nCONTENT:\n<code or diff>\n\nFILES TO GENERATE:\n- app/blog/page.tsx (blog listing page)\n- app/blog/[slug]/page.tsx (individual blog post page)\n- components/Navbar.tsx (add Blog navigation link)\n\nBLOG CONTENT:\n${blogContent}\n\nBLOG SLUG: ${blogSlug}\n\nNOW OUTPUT THE STRUCTURED RESPONSE STARTING WITH "FILE:":`
+            "text": `Generate code for a Next.js blog. Output ONLY file paths and code, nothing else.\n\nExample output format:\nFILE: app/blog/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\nimport React from 'react';\n// ... code here ...\n\nFILE: app/blog/[slug]/page.tsx\nEXISTS: no\nACTION: create\nCONTENT:\nimport React from 'react';\n// ... code here ...\n\nBlog: ${blogContent}\nSlug: ${blogSlug}\n\nStart with FILE:`
           }
         ]
       }
